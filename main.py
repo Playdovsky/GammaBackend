@@ -1,5 +1,6 @@
 from typing_extensions import Annotated
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Session, SQLModel, create_engine
 from models import ContactMessage
@@ -21,19 +22,34 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-### Endpoints ###
+### FastAPI App Setup ###
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @asynccontextmanager
 async def lifespan():
     create_db_and_tables()
 
-@app.get("/healthcheck")
+### Endpoints ###
+
+@app.get("/api/healthcheck")
 async def healthcheck():
     return {"message": "Service is running"}
 
-@app.post("/contact")
+@app.post("/api/contact")
 async def contact(contactMsg: ContactMessage, session: SessionDep):
     session.add(contactMsg)
     session.commit()
