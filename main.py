@@ -8,9 +8,11 @@ from models import ContactMessage, LoginRequest, Token, User, LoginResponse
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from jwt.exceptions import InvalidTokenError
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 
 
 ### Database & Session setup ###
+
 
 sqlite_file_name = "GammaDB.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -27,7 +29,9 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
+
 ### FastAPI App Setup ###
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,12 +54,8 @@ app.add_middleware(
 )
 
 
-SECRET_KEY="34d7563ahg309452gdqqw230987c1levq70ons27irmzaby8h5lv76x51g9s237u"
-ALGORITHM="HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
-
 ### Endpoints ###
+
 
 @app.get("/api/healthcheck")
 async def healthcheck():
@@ -67,6 +67,13 @@ async def contact(contactMsg: ContactMessage, session: SessionDep):
     session.commit()
     session.refresh(contactMsg)
     return contactMsg
+
+@app.get("/api/messages")
+async def get_messages(session: SessionDep):
+    messages = session.exec(select(ContactMessage)).all()
+    return messages
+
+## Token lifecycle ##
 
 def create_jwt_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
@@ -176,4 +183,4 @@ async def get_current_user(session: SessionDep, token: str = Depends(OAuth2Passw
     if user is None:
         raise credentials_exception
     
-    return user
+    return user
