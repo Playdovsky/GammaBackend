@@ -73,6 +73,15 @@ async def get_messages(session: SessionDep):
     messages = session.exec(select(ContactMessage)).all()
     return messages
 
+@app.delete("/api/messages/{message_id}")
+async def delete_message(message_id: int, session: SessionDep):
+    message = session.get(ContactMessage, message_id)
+    if not message:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    session.delete(message)
+    session.commit()
+    return {"message": "Message deleted successfully"}
+
 ## Token lifecycle ##
 
 def create_jwt_token(data: dict, expires_delta: timedelta):
