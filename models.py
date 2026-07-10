@@ -7,6 +7,8 @@ class ContactMessage(SQLModel, table=True):
     name: str
     email: str
     message: str
+    published: str
+    archived: bool
 
 class User(SQLModel, table=True):
     __tablename__ = "Users"

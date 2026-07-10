@@ -70,8 +70,18 @@ async def contact(contactMsg: ContactMessage, session: SessionDep):
 
 @app.get("/api/messages")
 async def get_messages(session: SessionDep):
-    messages = session.exec(select(ContactMessage)).all()
+    messages = session.exec(select(ContactMessage).where(ContactMessage.archived == 0)).all()
     return messages
+
+@app.patch("/api/messages/{message_id}")
+async def archive_message(message_id: int, session: SessionDep):
+    message = session.get(ContactMessage, message_id)
+    if not message:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    message.archived = True
+    session.commit()
+    session.refresh(message)
+    return {"message": "Message archived successfully"}
 
 @app.delete("/api/messages/{message_id}")
 async def delete_message(message_id: int, session: SessionDep):
