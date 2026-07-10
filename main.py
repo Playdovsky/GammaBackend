@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Session, SQLModel, create_engine, select
 from models import ContactMessage, LoginRequest, Token, User, LoginResponse
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt.exceptions import InvalidTokenError
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
@@ -13,7 +13,7 @@ from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_T
 
 ### Database & Session setup ###
 
-
+bearer_scheme = HTTPBearer()
 sqlite_file_name = "GammaDB.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 
@@ -69,30 +69,51 @@ async def contact(contactMsg: ContactMessage, session: SessionDep):
     return contactMsg
 
 @app.get("/api/messages")
-async def get_messages(session: SessionDep):
+async def get_messages(session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    verify_jwt_token(credentials.credentials)
     messages = session.exec(select(ContactMessage).where(ContactMessage.archived == 0)).all()
     return messages
 
 @app.patch("/api/messages/{message_id}")
-async def archive_message(message_id: int, session: SessionDep):
+async def archive_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    verify_jwt_token(credentials.credentials)
     message = session.get(ContactMessage, message_id)
+    
     if not message:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    
     message.archived = True
     session.commit()
     session.refresh(message)
     return {"message": "Message archived successfully"}
 
 @app.delete("/api/messages/{message_id}")
-async def delete_message(message_id: int, session: SessionDep):
+async def delete_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+    verify_jwt_token(credentials.credentials)
     message = session.get(ContactMessage, message_id)
+    
     if not message:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    
     session.delete(message)
     session.commit()
     return {"message": "Message deleted successfully"}
 
+
 ## Token lifecycle ##
+
+
+def verify_jwt_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+
+        if username is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        
+        return username
+    except InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 def create_jwt_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
@@ -107,27 +128,40 @@ def create_access_token(data: dict):
 def create_refresh_token(data: dict):
     return create_jwt_token(data, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
 
-@app.post("/api/auth", response_model=LoginResponse)
-async def auth(credentials: LoginRequest, response: Response, session: SessionDep):
+def set_refresh_cookie(response: Response, token: str):
+    response.set_cookie(
+        key="refresh_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=False,   # TODO: Set secure=True in production (HTTPS)
+        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+    )
+
+def authenticate_user(credentials: LoginRequest, session: SessionDep) -> User:
     statement = select(User).where(User.username == credentials.username)
     user = session.exec(statement).first()
 
     if not user or user.password != credentials.password:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    return user
+
+@app.post("/api/token")
+async def generate_token(credentials: LoginRequest, session: SessionDep):
+    user = authenticate_user(credentials, session)
+    
+    return create_access_token(data={"sub": user.username})
+
+@app.post("/api/auth", response_model=LoginResponse)
+async def auth(credentials: LoginRequest, response: Response, session: SessionDep):
+    user = authenticate_user(credentials, session)
     
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
     
-    # TODO: Set secure=True in production (HTTPS)
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-    )
-    
+    set_refresh_cookie(response, refresh_token)
+
     return {
         "accessToken": access_token,
         "user": {
@@ -143,13 +177,7 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
             detail="Refresh token missing"
         )
     
-    try:
-        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-    except InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+    username = verify_jwt_token(refresh_token)
         
     statement = select(User).where(User.username == username)
     user = session.exec(statement).first()
@@ -159,16 +187,8 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
     access_token = create_access_token(data={"sub": username})
     new_refresh_token = create_refresh_token(data={"sub": username})
     
-    # TODO: Set secure=True in production (HTTPS)
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
-    )
-    
+    set_refresh_cookie(response, new_refresh_token)
+
     return {"accessToken": access_token}
 
 @app.post("/api/logout")
