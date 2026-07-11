@@ -7,6 +7,15 @@ class ContactMessage(SQLModel, table=True):
     name: str
     email: str
     message: str
+
+class Message(SQLModel, table=True):
+    __tablename__ = "ContactMessages"
+    __table_args__ = {'extend_existing': True}
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    message: str
+    published: str
     archived: bool
 
 class User(SQLModel, table=True):
