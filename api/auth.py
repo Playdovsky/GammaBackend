@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from fastapi import Depends, FastAPI, APIRouter, HTTPException, status, Response, Cookie
-from sqlmodel import Session, SQLModel, create_engine, select
-from models import LoginRequest, Token, User, LoginResponse
-import jwt
+from fastapi import Depends, APIRouter, HTTPException, status, Response, Cookie
+from sqlmodel import select
+from models import LoginRequest, User, LoginResponse
 from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
-from database import get_session, SessionDep
+from database import SessionDep
+import jwt
 
 router = APIRouter(prefix="/api", tags=["Auth"])
 bearer_scheme = HTTPBearer()

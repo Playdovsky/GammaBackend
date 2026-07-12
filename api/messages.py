@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from sqlmodel import select
-from database import get_session, SessionDep
-from models import ContactMessage, Message, LoginRequest, Token, User, LoginResponse
+from database import SessionDep
+from models import Message
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from api.auth import verify_jwt_token, bearer_scheme

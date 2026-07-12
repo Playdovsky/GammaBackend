@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from models import ContactMessage
-from database import get_session, SessionDep
+from database import SessionDep
 
 router = APIRouter(prefix="/api", tags=["Contact"])
 
