@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 from database import SessionDep
 from sqlalchemy.exc import OperationalError
+from pwdlib import PasswordHash
 import jwt
 
 router = APIRouter(prefix="/api", tags=["Auth"])
@@ -54,14 +55,16 @@ def authenticate_user(credentials: LoginRequest, session: SessionDep) -> User:
     statement = select(User).where(User.username == credentials.username)
     user = session.exec(statement).first()
 
-    if not user or user.password != credentials.password:
+    password_hash = PasswordHash.recommended()
+    validation_result = password_hash.verify(credentials.password, user.password)
+
+    if not validation_result:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     return user
 
 @router.post("/token")
 async def generate_token(credentials: LoginRequest, session: SessionDep):
-
     try:
         user = authenticate_user(credentials, session)
         return create_access_token(data={"sub": user.username})
@@ -71,7 +74,6 @@ async def generate_token(credentials: LoginRequest, session: SessionDep):
 
 @router.post("/auth", response_model=LoginResponse)
 async def auth(credentials: LoginRequest, response: Response, session: SessionDep):
-
     try:
         user = authenticate_user(credentials, session)
     except OperationalError:

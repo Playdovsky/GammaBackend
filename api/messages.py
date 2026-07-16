@@ -2,7 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlmodel import select
 from database import SessionDep
-from models import Message
+from models import ContactMessage
 from api.auth import verify_jwt_token, bearer_scheme
 from sqlalchemy.exc import OperationalError
 
@@ -13,7 +13,7 @@ async def get_messages(session: SessionDep, credentials: HTTPAuthorizationCreden
     verify_jwt_token(credentials.credentials)
     
     try:
-        messages = session.exec(select(Message).where(Message.archived == 0)).all()
+        messages = session.exec(select(ContactMessage).where(ContactMessage.archived == 0)).all()
         return messages
     except OperationalError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
@@ -21,7 +21,7 @@ async def get_messages(session: SessionDep, credentials: HTTPAuthorizationCreden
 @router.patch("/messages/{message_id}")
 async def archive_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     verify_jwt_token(credentials.credentials)
-    message = session.get(Message, message_id)
+    message = session.get(ContactMessage, message_id)
     
     if not message:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
@@ -40,7 +40,7 @@ async def archive_message(message_id: int, session: SessionDep, credentials: HTT
 @router.delete("/messages/{message_id}")
 async def delete_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
     verify_jwt_token(credentials.credentials)
-    message = session.get(Message, message_id)
+    message = session.get(ContactMessage, message_id)
     
     if not message:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
