@@ -53,11 +53,11 @@ def test_contact_invalid_email2(client: TestClient):
     response = client.post("/api/contact", json=payload3)
     assert response.status_code == 400
     
-def test_contact_invalid_no_message(client: TestClient):
+def test_contact_no_message(client: TestClient):
     response = client.post("/api/contact", json=payload4)
     assert response.status_code == 422
 
-def test_contact_invalid_whitespace_name(client: TestClient):
+def test_contact_whitespace_name(client: TestClient):
     response = client.post("/api/contact", json=payload5)
     assert response.status_code == 400
 
