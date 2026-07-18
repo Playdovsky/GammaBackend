@@ -1,5 +1,5 @@
-from fastapi import Depends, Cookie, APIRouter, HTTPException, status, Response
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer
+from fastapi import Cookie, APIRouter, HTTPException, status, Response
+from fastapi.security import HTTPBearer
 from sqlmodel import select
 from models import LoginRequest, User, LoginResponse
 from jwt.exceptions import InvalidTokenError
@@ -55,6 +55,9 @@ def authenticate_user(credentials: LoginRequest, session: SessionDep) -> User:
     statement = select(User).where(User.username == credentials.username)
     user = session.exec(statement).first()
 
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
     password_hash = PasswordHash.recommended()
     validation_result = password_hash.verify(credentials.password, user.password)
 
@@ -94,10 +97,7 @@ async def auth(credentials: LoginRequest, response: Response, session: SessionDe
 @router.post("/refresh")
 async def refresh(response: Response, refresh_token: str | None = Cookie(default=None), session: SessionDep = None):
     if not refresh_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token missing"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")
     
     username = verify_jwt_token(refresh_token)
 
@@ -105,7 +105,7 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
         statement = select(User).where(User.username == username)
         user = session.exec(statement).first()
         if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     except OperationalError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
 
@@ -113,7 +113,7 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
     new_refresh_token = create_refresh_token(data={"sub": username})
     
     set_refresh_cookie(response, new_refresh_token)
-
+    
     return {"accessToken": access_token}
 
 @router.post("/logout")
