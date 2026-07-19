@@ -43,7 +43,7 @@ def test_contact_success(client: TestClient):
     assert data["name"] == "Matthew"
     assert data["email"] == "matthew.stick@gmail.com"
     assert data["message"] == "This is a test message"
-    assert data["archived"] == False
+    assert not data["archived"]
 
 def test_contact_invalid_email(client: TestClient):
     response = client.post("/api/contact", json=payload2)
@@ -69,4 +69,4 @@ def test_contact_success_different_characters(client: TestClient):
     assert data["name"] == "david"
     assert data["email"] == "david-horse/man@protonmail.com"
     assert data["message"] == "This is a test message"
-    assert data["archived"] == False
+    assert not data["archived"]

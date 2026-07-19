@@ -37,7 +37,7 @@ def test_get_messages_success(client: TestClient):
     assert data[0]["name"] == "Richard"
     assert data[0]["email"] == "rich_richard@gmail.com"
     assert data[0]["message"] == "I like your project, can you tell me more about it?"
-    assert data[0]["archived"] == False
+    assert not data[0]["archived"]
 
 def test_archive_message_no_token(client: TestClient):
     client.post("/api/contact", json=contact_credentials)
@@ -60,7 +60,12 @@ def test_archive_message_success(client: TestClient, session: Session):
 
     # Step 3: Verify if message exists
     statement = select(ContactMessage)
-    message = session.exec(statement).first()
+    response_raw = session.exec(statement).first()
+    data_raw = response_raw.model_dump()
+    assert data_raw["name"] == "Richard"
+    assert data_raw["email"] == "rich_richard@gmail.com"
+    assert data_raw["message"] == "I like your project, can you tell me more about it?"
+    assert data_raw["archived"]
 
 def test_archive_archived_message(client: TestClient):
     client.post("/api/contact", json=contact_credentials)

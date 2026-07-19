@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from api import auth, contact, healthcheck, messages
