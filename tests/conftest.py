@@ -20,6 +20,7 @@ def session_fixture():
         yield session
     
     SQLModel.metadata.drop_all(engine)
+    engine.dispose()
 
 @pytest.fixture(name="client")
 def client_fixture(session: Session):
