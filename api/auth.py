@@ -4,7 +4,7 @@ from sqlmodel import select
 from models import LoginRequest, User, LoginResponse
 from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
-from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+from config import settings
 from database import SessionDep
 from sqlalchemy.exc import OperationalError
 from pwdlib import PasswordHash
@@ -15,7 +15,7 @@ bearer_scheme = HTTPBearer()
 
 def verify_jwt_token(token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
 
         if username is None:
@@ -30,16 +30,16 @@ def create_jwt_token(data: dict, expires_delta: timedelta):
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + expires_delta
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
     except TypeError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"Invalid data type: {str(e)}")
 
 def create_access_token(data: dict):
-    return create_jwt_token(data, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return create_jwt_token(data, timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
 
 def create_refresh_token(data: dict):
-    return create_jwt_token(data, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    return create_jwt_token(data, timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS))
 
 def set_refresh_cookie(response: Response, token: str):
     response.set_cookie(
@@ -48,7 +48,7 @@ def set_refresh_cookie(response: Response, token: str):
         httponly=True,
         samesite="lax",
         secure=False,   # TODO: Set secure=True in production (HTTPS)
-        max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
 
 def authenticate_user(credentials: LoginRequest, session: SessionDep) -> User:
@@ -136,7 +136,7 @@ async def logout(response: Response):
 #    )
 #
 #    try:
-#        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 #        username: str = payload.get("sub")
 #        if username is None:
 #            raise credentials_exception

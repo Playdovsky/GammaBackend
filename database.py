@@ -3,6 +3,7 @@ from typing_extensions import Annotated
 from fastapi import Depends
 from models import User
 from pwdlib import PasswordHash
+from config import settings
 import logging
 
 logger = logging.getLogger("uvicorn.info")
@@ -19,7 +20,7 @@ def create_db_and_tables():
 
 def seed_admin_user():
     password_hash = PasswordHash.recommended()
-    default_password = "xYz1!2@3#"
+    default_password = settings.SEED_USER_PASSWORD
     password_hashed = password_hash.hash(default_password)
 
     with Session(engine) as session:

@@ -1,4 +1,13 @@
-SECRET_KEY="34d7563ahg309452gdqqw230987c1levq70ons27irmzaby8h5lv76x51g9s237u"
-ALGORITHM="HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    SEED_USER_PASSWORD: str
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
