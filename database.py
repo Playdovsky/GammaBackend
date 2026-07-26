@@ -1,7 +1,7 @@
-from sqlmodel import create_engine, select, SQLModel, Session
+from sqlmodel import create_engine, select, SQLModel, Session, or_
 from typing_extensions import Annotated
 from fastapi import Depends
-from models import User
+from models import User, ContactMessage
 from pwdlib import PasswordHash
 from config import settings
 import logging
@@ -33,7 +33,38 @@ def seed_admin_user():
             logger.info("Sample user has been added.")
         else:
             logger.info("Sample user already exists.")
-    
+
+sample_messages = [
+    ContactMessage(name = "David", email = "ambro1996@protonmail.com", message = "Hello World!"),
+    ContactMessage(name = "Matthew", email = "matthew_stick@gmail.com", message = "This is a test message!"),
+    ContactMessage(name = "Carlos", email = "carlos.fontanciones@wp.pl", message = "PDW PDW for all good folks out there!")
+]
+
+def seed_sample_messages():
+    with Session(engine) as session:
+        existing_messages = set(
+            session.exec(
+                select(ContactMessage.email).where(
+                    or_(
+                        ContactMessage.email == "ambro1996@protonmail.com", 
+                        ContactMessage.email == "matthew_stick@gmail.com", 
+                        ContactMessage.email == "carlos.fontanciones@wp.pl"
+                    )
+                )
+            ).all()
+        )
+
+        if len(existing_messages) < 3:
+            for sample in sample_messages:
+                if sample.email not in existing_messages:
+                    session.add(sample)
+
+            session.commit()
+            logger.info("Missing sample messages have been added")
+        else:
+            logger.info("All sample messages already exist")
+
+
 def get_session():
     with Session(engine) as session:
         yield session

@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from api import auth, contact, healthcheck, messages
-from database import create_db_and_tables, seed_admin_user
+from database import create_db_and_tables, seed_admin_user, seed_sample_messages
 
 ### FastAPI App Setup ###
 
@@ -10,6 +10,7 @@ from database import create_db_and_tables, seed_admin_user
 async def lifespan(app: FastAPI):
     create_db_and_tables()
     seed_admin_user()
+    seed_sample_messages()
     yield
 
 app = FastAPI(lifespan=lifespan)
