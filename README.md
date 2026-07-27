@@ -11,6 +11,7 @@ This repository serves as the backend service for the Gamma project (which is sp
 The main objective of GammaBackend is to serve as a practical case study for building a complete CI/CD pipeline from scratch.
 
 Key learning milestones for this project include:
+- 🐋 **Containerization:** Packaging and isolating the FastAPI application, database, and dependencies using Docker.
 - 🛠️ **Building a CI/CD Pipeline:** Understanding continuous integration and automated testing using **GitHub Actions**.
 - 🧪 **Integration Testing:** Designing and running first-ever end-to-end integration tests.
 - ⚡ **FastAPI Framework:** First time building asynchronous RESTful APIs with FastAPI.
@@ -28,3 +29,4 @@ Key learning milestones for this project include:
 | **Database** | [SQLite3](https://www.sqlite.org/) | Lightweight relational database engine |
 | **Testing** | [pytest](https://docs.pytest.org/) | Unit and integration testing suite |
 | **Linter & Formatter** | [Ruff](https://docs.astral.sh/ruff/) | Blazing-fast Python linter and code formatter |
+| **Containerization** | [Docker](https://www.docker.com/) | Containerized application environment & deployment |
