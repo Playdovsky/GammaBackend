@@ -10,6 +10,6 @@ RUN apt-get update -y && apt-get install -y sqlite3
 
 COPY . /app/
 
-CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "80"]
+CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8080"]
 
-# To run locally use: docker run --env-file .env --name gamma-backend -p 80:80 playdovsky/gamma-backend
+# To run locally use: docker run --env-file .env --name gamma-backend -p 8080:8080 playdovsky/gamma-backend

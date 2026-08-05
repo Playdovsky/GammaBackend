@@ -46,8 +46,8 @@ def set_refresh_cookie(response: Response, token: str):
         key="refresh_token",
         value=token,
         httponly=True,
-        samesite="lax",
-        secure=False,   # TODO: Set secure=True in production (HTTPS)
+        samesite=settings.COOKIE_SAMESITE,
+        secure=settings.COOKIE_SECURE,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
 
@@ -118,12 +118,11 @@ async def refresh(response: Response, refresh_token: str | None = Cookie(default
 
 @router.post("/logout")
 async def logout(response: Response):
-    # TODO: Set secure=True in production (HTTPS)
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
-        samesite="lax",
-        secure=False
+        samesite=settings.COOKIE_SAMESITE,
+        secure=settings.COOKIE_SECURE
     )
     return {"message": "Logged out successfully"}
 

@@ -24,11 +24,11 @@ def seed_admin_user():
     password_hashed = password_hash.hash(default_password)
 
     with Session(engine) as session:
-        sample_user_exists = session.exec(select(User).where(User.username == "Mateusz")).first()
+        sample_user_exists = session.exec(select(User).where(User.username == settings.SEED_USER_USERNAME)).first()
 
         if not sample_user_exists:
             logger.info("Sample user is not present in database. Creating...")
-            session.add(User(username="Mateusz", password=password_hashed))
+            session.add(User(username=settings.SEED_USER_USERNAME, password=password_hashed))
             session.commit()
             logger.info("Sample user has been added.")
         else:

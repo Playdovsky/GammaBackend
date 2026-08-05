@@ -30,7 +30,7 @@ def client_fixture(session: Session):
     app.dependency_overrides[get_session] = get_session_override
     seed_test_admin_user(session)
     
-    with TestClient(app) as client:
+    with TestClient(app, base_url="https://testserver") as client:
         yield client
     
     app.dependency_overrides.clear()
