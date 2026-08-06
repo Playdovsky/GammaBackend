@@ -47,6 +47,13 @@ jobs:
       run: |
         pip-audit
     - name: Test with pytest
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        ALGORITHM: "HS256"
+        ACCESS_TOKEN_EXPIRE_MINUTES: 15
+        REFRESH_TOKEN_EXPIRE_DAYS: 7
+        SEED_USER_USERNAME: "admin"
+        SEED_USER_PASSWORD: ${{ secrets.SEED_USER_PASSWORD }}
       run: |
         pytest --cov=api --cov-fail-under=80
     - name: Authenticate to GCP
