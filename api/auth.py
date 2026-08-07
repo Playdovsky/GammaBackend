@@ -1,14 +1,16 @@
-from fastapi import Cookie, APIRouter, HTTPException, status, Response
-from fastapi.security import HTTPBearer
-from sqlmodel import select
-from models import LoginRequest, User, LoginResponse
-from jwt.exceptions import InvalidTokenError
 from datetime import datetime, timedelta, timezone
+
+import jwt
+from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi.security import HTTPBearer
+from jwt.exceptions import InvalidTokenError
+from pwdlib import PasswordHash
+from sqlalchemy.exc import OperationalError
+from sqlmodel import select
+
 from config import settings
 from database import SessionDep
-from sqlalchemy.exc import OperationalError
-from pwdlib import PasswordHash
-import jwt
+from models import LoginRequest, LoginResponse, User
 
 router = APIRouter(prefix="/api", tags=["Auth"])
 bearer_scheme = HTTPBearer()
@@ -33,7 +35,7 @@ def create_jwt_token(data: dict, expires_delta: timedelta):
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
     except TypeError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"Invalid data type: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=f"Invalid data type: {e!s}")
 
 def create_access_token(data: dict):
     return create_jwt_token(data, timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))

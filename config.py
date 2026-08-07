@@ -1,6 +1,7 @@
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     # JWT token
     SECRET_KEY: str

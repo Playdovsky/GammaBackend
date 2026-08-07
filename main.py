@@ -1,6 +1,8 @@
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+
+from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from api import auth, contact, healthcheck, messages
 from config import settings
 from database import create_db_and_tables, seed_admin_user, seed_sample_messages

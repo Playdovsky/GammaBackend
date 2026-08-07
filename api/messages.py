@@ -1,15 +1,18 @@
-from fastapi import Depends, APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.exc import OperationalError
 from sqlmodel import select
+
+from api.auth import bearer_scheme, verify_jwt_token
 from database import SessionDep
 from models import ContactMessage
-from api.auth import verify_jwt_token, bearer_scheme
-from sqlalchemy.exc import OperationalError
 
 router = APIRouter(prefix="/api", tags=["Messages"])
 
 @router.get("/messages")
-async def get_messages(session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def get_messages(session: SessionDep, credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)]):
     verify_jwt_token(credentials.credentials)
     
     try:
@@ -19,7 +22,7 @@ async def get_messages(session: SessionDep, credentials: HTTPAuthorizationCreden
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
 
 @router.patch("/messages/{message_id}")
-async def archive_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def archive_message(message_id: int, session: SessionDep, credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)]):
     verify_jwt_token(credentials.credentials)
     message = session.get(ContactMessage, message_id)
     
@@ -38,7 +41,7 @@ async def archive_message(message_id: int, session: SessionDep, credentials: HTT
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
 
 @router.delete("/messages/{message_id}")
-async def delete_message(message_id: int, session: SessionDep, credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)):
+async def delete_message(message_id: int, session: SessionDep, credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)]):
     verify_jwt_token(credentials.credentials)
     message = session.get(ContactMessage, message_id)
     

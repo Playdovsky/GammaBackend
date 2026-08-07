@@ -1,6 +1,7 @@
-from tests.conftest import TestClient, Session
-from models import ContactMessage
 from sqlmodel import select
+
+from models import ContactMessage
+from tests.conftest import Session, TestClient
 
 credentials = {
     "username": "Roman",

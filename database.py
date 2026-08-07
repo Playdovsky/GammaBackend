@@ -1,10 +1,12 @@
-from sqlmodel import create_engine, select, SQLModel, Session, or_
-from typing_extensions import Annotated
-from fastapi import Depends
-from models import User, ContactMessage
-from pwdlib import PasswordHash
-from config import settings
 import logging
+from typing import Annotated
+
+from fastapi import Depends
+from pwdlib import PasswordHash
+from sqlmodel import Session, SQLModel, create_engine, or_, select
+
+from config import settings
+from models import ContactMessage, User
 
 logger = logging.getLogger("uvicorn.info")
 

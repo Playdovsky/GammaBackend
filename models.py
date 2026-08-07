@@ -1,6 +1,8 @@
+import datetime
+
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
-import datetime
+
 
 class ContactMessage(SQLModel, table=True):
     __tablename__ = "ContactMessages"

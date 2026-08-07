@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
-from models import ContactMessage
-from database import SessionDep
-from sqlalchemy.exc import IntegrityError, DataError, OperationalError
 import re
 import string
+
+from fastapi import APIRouter, HTTPException, status
+from sqlalchemy.exc import DataError, IntegrityError, OperationalError
+
+from database import SessionDep
+from models import ContactMessage
 
 router = APIRouter(prefix="/api", tags=["Contact"])
 
@@ -25,6 +27,6 @@ async def contact(contactMsg: ContactMessage, session: SessionDep):
         session.refresh(contactMsg)
         return contactMsg
     except (IntegrityError, DataError) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid contact form data: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid contact form data: {e!s}")
     except OperationalError:
         raise HTTPException(status_code = status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")

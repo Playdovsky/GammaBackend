@@ -1,11 +1,13 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, create_engine, Session
-from sqlalchemy.pool import StaticPool
-from main import app
-from database import get_session
-from models import User
 from pwdlib import PasswordHash
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
+
+from database import get_session
+from main import app
+from models import User
+
 
 @pytest.fixture(name="session")
 def session_fixture():
